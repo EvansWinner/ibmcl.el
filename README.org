@@ -1,9 +1,12 @@
-* ctrl-lang.el
+* ibmcl.el
+
+[Formerly ctrl-lang.el]
 
 This is an Emacs Lisp library I wrote to do syntax highlighting for
-IBM’s AS/400 Control Language (CL).  It doesn’t do much besides that,
-though it does have a nice function to get IBM’s documentation about
-CL commands.
+the IBM i (neé iSeries, neé AS/400) “midrange” (i.e., minicomputer)
+Control Language (CL).  It doesn’t do much besides that, though it
+does have a nice function to get IBM’s documentation about CL
+commands.
 
 It was my first attempt to write a mode, and it uses
 `define-generic-mode’ to do the work.  It does what it does.  Anyway,
