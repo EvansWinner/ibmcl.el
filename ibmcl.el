@@ -1,29 +1,12 @@
-;;; ctrl-lang.el --- generic AS/400 Control Language mode
+;;; ibmcl.el --- syntax highlighting for AS/400 Control Language files
 
-;; Version: 2
 ;; Copyright (C) 2006 Evans Winner
-;; Time-stamp: <2014-05-18 23:17:24 thorne>
+;; Time-stamp: <2014-06-06 14:25:04 evansw>
 ;; Author: Evans Winner <ego111@gmail.com>
 ;; Created: 2006.8.3
 ;; Keywords: files languages
-;; Favorite Color: Beer, as in Emacs.
 
-;; This file is not part of GNU Emacs.
-
-;; This program is free software; you can redistribute it and/or
-;; modify it under the terms of the GNU General Public License as
-;; published by the Free Software Foundation; either version 2 of the
-;; License, or (at your option) any later version.
-
-;; This program is distributed in the hope that it will be useful, but
-;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-;; General Public License for more details.
-
-;; You should have received a copy of the GNU General Public License
-;; along with this program; if not, write to the Free Software
-;; Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-;; USA
+;; See the end of the file for license information.
 
 ;;; Commentary:
 
@@ -33,44 +16,40 @@
 ;; a bit fruity.
 
 ;; USE: Load this file, then visit a CL source file and do `M-x
-;; ctrl-lang-mode'.  There's also a documentation lookup functionality
+;; ibmcl-mode'.  There's also a documentation lookup functionality
 ;; for doing `browse-url' to IBM's docs on CL commands and syntax
-;; diagrams.  Do `C-h f ctrl-lang-mode <ret>' for info.
+;; diagrams.  Do `C-h f ibmcl-mode <ret>' for info.
 
-;; REQUIRES: This package uses the generic mode package, `generic.el'
-;; and the documentation lookup uses `browse-url'.  But if you don't
-;; need the docs, you can comment out the line below that says:
+;; REQUIRES: The documentation lookup uses `browse-url'.  But if you
+;; don't need the docs, you can comment out the line below that says:
      
 ;;        `(require 'browse-url)'.
 
 ;;; Change Log:
 
-;;  Version 0.1
-;;  * initial release
-
-;; Verion 2
-;;  * Petit cleanup 
+;;  2014.6.2 : Rename to ibmcl; add comment-dwim support for the
+;;             Java-style comment syntax.
 
 ;;; Bugs:
 ;;
 ;; * `?%' needs a space after it or else the following CL command
-;;   won't get font-locked.  Dunno why.  * Can't embed strings in
-;;   comments.  I can't find a work- around.
+;;    won't get font-locked.  Dunno why.
+
+;; * Can't embed strings in comments.  Can't find a workaround.
 
 ;;; Code:
 
 ;; USER VARIABLES:
-;;  ctrl-lang-doc-base-address --  If IBM ever changes their
-;;                                 URL for CL docs, or if
-;;                                 you want to use the docs
-;;                                 for a more recent release
-;;                                 of OS/400 change this.
-;;  site-commands              --  Add your own custom CL
-;;                                 commands here.
+;;  ibmcl-doc-base-address --  If IBM ever changes their
+;;                             URL for CL docs, or if
+;;                             you want to use the docs
+;;                             for a more recent release
+;;                             of OS/400 change this.
+;;  ibmcl-site-commands    --  Add your own custom CL
+;;                             commands here.
 ;; Other than that, see below.
 
 ;; Setup
-(require 'generic)
 (require 'browse-url)  ; For the doc lookup feature.
 
 ;; This hack uses browse-url and the IBM site.  For the docs,
@@ -79,14 +58,14 @@
 ;; name (all of it) then `syn.htm'.  Don't ask me why.
 ;;
 ;; Don't forget the trailing `/'.
-(defconst ctrl-lang-doc-base-address 
+(defconst ibmcl-doc-base-address 
   "http://publib.boulder.ibm.com/iseries/v5r2/ic2924/info/cl/"
   "*Base web address to use for automatic command doc lookup.")
 
 ;; Most of the stuff to customize is here.  This function is
 ;; called at the end of the call to `define-generic-mode'.
 
-(defun ctrl-lang-setup ()
+(defun ibmcl-setup ()
   ;; These first four are an attempt to make it a little like
   ;; SEU, or more to the point, to make the result more
   ;; readable in SEU, and to hopefully make it all fit in the
@@ -96,9 +75,9 @@
   (setq tab-stop-list '(11 22 33 44 55 66))
   (setq fill-column 68)
   ;; Key bindings for the convenience functions.
-  (local-set-key "\C-c\C-lm" 'ctrl-lang-add-mode-line)
-  (local-set-key "\C-c\C-ld" 'ctrl-lang-get-doc)
-  (local-set-key "\C-c\C-ls" 'ctrl-lang-get-syntax)
+  (local-set-key "\C-c\C-lm" 'ibmcl-add-mode-line)
+  (local-set-key "\C-c\C-ld" 'ibmcl-get-doc)
+  (local-set-key "\C-c\C-ls" 'ibmcl-get-syntax)
   ;; This is important...  i think.  It makes the syntax
   ;; highlighting non-case-sensitive.
   (make-local-variable 'font-lock-defaults)
@@ -107,7 +86,7 @@
 	 'generic-font-lock-defaults nil t)))
 
 ;; Site-specific CL commands:
-(setq site-commands
+(setq ibmcl-site-commands
       (list
        "FOOBARBAZ"))
 
@@ -117,19 +96,19 @@
 
 ;; Helper functions and misc.
 
-(defun ctrl-lang-add-mode-line ()
-  "Add text: `/* -*- Mode: ctrl-lang -*- */' to top of buffer.
+(defun ibmcl-add-mode-line ()
+  "Add text: `/* -*- Mode: ibmcl -*- */' to top of buffer.
 
-Allows Emacs to open the file in ctrl-lang mode automatically,
+Allows Emacs to open the file in ibmcl mode automatically,
 since we can't use `auto-mode-alist' in the context of files
 without a distinctive file extension--as is the case with CL
 source files."
   (interactive)
   (save-excursion
     (goto-char (point-min))
-    (insert "/* -*- Mode: ctrl-lang -*- */\n")))
+    (insert "/* -*- Mode: ibmcl -*- */\n")))
 
-(defun ctrl-lang-get-doc ()
+(defun ibmcl-get-doc ()
   "Browse IBM's online docs for a CL command.
 
 Minibuffer will prompt for CL command to look up, default is
@@ -144,14 +123,14 @@ whatever word is around point."
 	   (word-at-point) "): ") 
 	  nil nil (word-at-point)))))
     (browse-url
-     (concat ctrl-lang-doc-base-address
+     (concat ibmcl-doc-base-address
 	     ;; Truncate the command name if it is longer than 8 chars.
 	     (if (< (length command-name) 9)
 		 command-name
 	       (substring command-name 0 8))
 	     ".htm"))))
 
-(defun ctrl-lang-get-syntax ()
+(defun ibmcl-get-syntax ()
   "Browse IBM's online syntax diagram for a CL command.
 
 Minibuffer will prompt for CL command to look up, default is
@@ -167,16 +146,16 @@ whatever word is around point."
 	   (word-at-point) "): ") 
 	  nil nil (word-at-point)))))
     (browse-url
-     (concat ctrl-lang-doc-base-address
+     (concat ibmcl-doc-base-address
 	     command-name
 	     "syn.htm"))))
 
 ;;; Data:
 
-;; These are the giant lists of CL commands.  (Stupid?)  We are doing
-;; two lists.  One for most everything and one for just flow control
-;; and some other keyword-like CL commands, like PGM and IF.  The
-;; first we do in `font-lock-function-name-face', the second we do in
+;; These are the giant lists of CL commands.  We are doing two lists.
+;; One for most everything and one for just flow control and some
+;; other keyword-like CL commands, like PGM and IF.  The first we do
+;; in `font-lock-function-name-face', the second we do in
 ;; `font-lock-keyword-face'.
 
 ;; This one is open to additions...
@@ -1929,73 +1908,91 @@ whatever word is around point."
        "WRKWTR"
        ))
 
-(define-generic-mode 'ctrl-lang-mode
-  nil
-  nil                   ; Keywords
-  (list                 ; Everything else.  Order matters.
+(define-generic-mode  'ibmcl-mode
+  '(("/*" . "*/"))			; comments
+  nil 
+  (list				    ; Everything else.  Order matters.
    ;; Strings
    '("'[^']*'" . 'font-lock-string-face)
-   ;; Comments
-   '("/\\*.*\\*/" .      ; I think this works.
-     'font-lock-comment-face)
-   ;; Labels
-   '("[A-Z@#\$][A-Z0-9@#\$_]?[A-Z0-9@#\$_]?[A-Z0-9@#\$_]?[A-Z0-9@#\$_]?[A-Z0-9@#\$_]?[A-Z0-9@#\$_]?[A-Z0-9@#\$_]?[A-Z0-9@#\$_]?[A-Z0-9@#\$_]?:"
-     . 'font-lock-constant-face)
-   ;; Line continuations
-   '("[-+]$" . 'font-lock-warning-face)
-   ;; Command shortcuts
-   '("||" . 'font-lock-function-name-face)
-   '("|<" . 'font-lock-function-name-face)
-   '("|>" . 'font-lock-function-name-face)
-   ;; For params that look like (*)
-   '("(\\(\\*\\))" 1 font-lock-type-face)
-   ;; Data thingie
-   '("^//[ \\t]" . 'font-lock-builtin-face)
-   ;; The giant list of CL commands
-   (generic-make-keywords-list command-list
-			       'font-lock-function-name-face)
-   ;; The list of keywords
-   (generic-make-keywords-list keyword-list
-			       'font-lock-keyword-face)
-   ;; Site-specific CL commands
-   (generic-make-keywords-list site-commands
-			       'font-lock-function-name-face)
-   ;; Builtin variable recasters... or whatever you call them.
-   '("%BINARY" . 'font-lock-builtin-face)
-   '("%BIN" . 'font-lock-builtin-face)
-   '("%SST" . 'font-lock-builtin-face)
-   '("%SUBSTRING" . 'font-lock-builtin-face)
-   '("%SWITCH" . 'font-lock-builtin-face)
-   ;; Prompt operators
-   '("[ \t]\\?[<*&%?]?" . 'font-lock-warning-face)
-   ;; Math operators
-   '("[ \t][-*/+=][ \t]" . 'font-lock-builtin-face)
-   ;; Variables
-   '("&[A-Z@#\$][A-Z0-9@#\$\._]?[A-Z0-9@#\$\._]?[A-Z0-9@#\$\._]?[A-Z0-9@#\$\._]?[A-Z0-9@#\$\._]?[A-Z0-9@#\$\._]?[A-Z0-9@#\$\._]?[A-Z0-9@#\$\._]?[A-Z0-9@#\$\._]?"
-     . 'font-lock-variable-name-face)
-   ;; Params
-   '("\\*[A-Z][A-Z]*" . 'font-lock-type-face))
-  nil                   ; File associations.  Can't use.
+  ;; Labels
+  '("[A-Z@#\$][A-Z0-9@#\$_]?[A-Z0-9@#\$_]?[A-Z0-9@#\$_]?[A-Z0-9@#\$_]?[A-Z0-9@#\$_]?[A-Z0-9@#\$_]?[A-Z0-9@#\$_]?[A-Z0-9@#\$_]?[A-Z0-9@#\$_]?:"
+    . 'font-lock-constant-face)
+  ;; Line continuations
+  '("[-+]$" . 'font-lock-warning-face)
+  ;; Command shortcuts
+  '("||" . 'font-lock-function-name-face)
+  '("|<" . 'font-lock-function-name-face)
+  '("|>" . 'font-lock-function-name-face)
+  ;; For params that look like (*)
+  '("(\\(\\*\\))" 1 font-lock-type-face)
+  ;; Data thingie
+  '("^//[ \\t]" . 'font-lock-builtin-face)
+  ;; The giant list of CL commands
+  (generic-make-keywords-list command-list
+			      'font-lock-function-name-face)
+  ;; The list of keywords
+  (generic-make-keywords-list keyword-list
+			      'font-lock-keyword-face)
+  ;; Site-specific CL commands
+  (generic-make-keywords-list ibmcl-site-commands
+			      'font-lock-function-name-face)
+  ;; Builtin variable recasters... or whatever you call them.
+  '("%BINARY" . 'font-lock-builtin-face)
+  '("%BIN" . 'font-lock-builtin-face)
+  '("%SST" . 'font-lock-builtin-face)
+  '("%SUBSTRING" . 'font-lock-builtin-face)
+  '("%SWITCH" . 'font-lock-builtin-face)
+  ;; Prompt operators
+  '("[ \t]\\?[<*&%?]?" . 'font-lock-warning-face)
+  ;; Math operators
+  '("[ \t][-*/+=][ \t]" . 'font-lock-builtin-face)
+  ;; Variables
+  '("&[A-Z@#\$][A-Z0-9@#\$\._]?[A-Z0-9@#\$\._]?[A-Z0-9@#\$\._]?[A-Z0-9@#\$\._]?[A-Z0-9@#\$\._]?[A-Z0-9@#\$\._]?[A-Z0-9@#\$\._]?[A-Z0-9@#\$\._]?[A-Z0-9@#\$\._]?"
+    . 'font-lock-variable-name-face)
+  ;; Params
+  '("\\*[A-Z][A-Z]*" . 'font-lock-type-face))
+
+  nil				      ; File associations.  Can't use.
 					; Use mode line string instead.
-  (list 'ctrl-lang-setup)
+  (list 'ibmcl-setup)
   "Generic mode for AS/400 Control Language files.
 Syntax highlighting (almost) only.
 
-\\[ctrl-lang-add-mode-line]
-`ctrl-lang-add-mode-line' -- Add a magic mode line for the
+\\[ibmcl-add-mode-line]
+`ibmcl-add-mode-line' -- Add a magic mode line for the
                              mode to the start of the buffer
                              \(embedded in a CL comment.\)
-\\[ctrl-lang-get-doc]
-`ctrl-lang-get-doc'       -- Use browse-url to get IBM's
+\\[ibmcl-get-doc]
+`ibmcl-get-doc'       -- Use browse-url to get IBM's
                              online documentation page for
                              a CL command.
-\\[ctrl-lang-get-syntax]
-`ctrl-lang-get-syntax'    -- Use browse-url to get IBM's
+\\[ibmcl-get-syntax]
+`ibmcl-get-syntax'    -- Use browse-url to get IBM's
                              online syntax diagram page for
                              a CL command.
 ")
 
+;; modify the keymap
 
-(provide 'ctrl-lang)
 
-;;; ctrl-lang.el ends here
+(provide 'ibmcl)
+
+;; This file is not part of GNU Emacs.
+
+;; This program is free software; you can redistribute it and/or
+;; modify it under the terms of the GNU General Public License as
+;; published by the Free Software Foundation; either version 2 of the
+;; License, or (at your option) any later version.
+
+;; This program is distributed in the hope that it will be useful, but
+;; WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with this program; if not, write to the Free Software
+;; Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+;; USA
+
+
+;;; ibmcl.el ends here
